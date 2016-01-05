@@ -68,28 +68,55 @@ namespace NetworkInterfaceInfo
                 case 0:
                     long sendSpeed = interfaceStats.BytesSent - interfaceStatistics.bytesSent;
                     TimeSpan lastCheckSend = DateTime.Now - interfaceStatistics.byteSentLast;
-                    long sent = Convert.ToInt64(((double)(sendSpeed / 1024L) / lastCheckSend.TotalSeconds) * 8L);
+                    long sent = ConvertBytesToKbps(sendSpeed, lastCheckSend.TotalSeconds);
                     foreach (var update in NetworkInfo.Where(S => S.id == interfaceId))
                     {
                         update.bytesSent = interfaceStats.BytesSent;
                         update.byteSentLast = DateTime.Now;
-                        update.bytesSentTotal += sent;
+                        if(update.bytesSentTotal != 0)
+                        {
+                            update.bytesSentTotal += (sendSpeed / 1024L) * 8L;
+                        }
+                        else
+                        {
+                            update.bytesSentTotal = 1;
+                        }
                     }
                     return sent;
                 case 1:
                     long recieveSpeed = interfaceStats.BytesReceived - interfaceStatistics.bytesReceived;
                     TimeSpan lastCheckRec = DateTime.Now - interfaceStatistics.byteReceivedLast;
-                    long received = Convert.ToInt64(((double)(recieveSpeed / 1024L) / lastCheckRec.TotalSeconds) * 8L);
+                    long received = ConvertBytesToKbps(recieveSpeed, lastCheckRec.TotalSeconds);
                     foreach (var update in NetworkInfo.Where(S => S.id == interfaceId))
                     {
                         update.byteReceivedLast = DateTime.Now;
                         update.bytesReceived = interfaceStats.BytesReceived;
-                        update.bytesReceivedTotal += received;
+                        if(update.bytesReceivedTotal != 0)
+                        {
+                            update.bytesReceivedTotal += (recieveSpeed / 1024L) * 8L;
+                        }
+                        else
+                        {
+                            update.bytesReceivedTotal = 1;
+                        }
                     }
                     return received;
                 default:
                     return 0;
             }
+        }
+        public static long ConvertBytesToKbps(long speed, double seconds)
+        {
+            long ReturnSpeed;
+            if(seconds < 1)
+            {
+                ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) * seconds) * 8L);
+            }
+            else
+            {
+                ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) / seconds) * 8L);
+            }
+            return ReturnSpeed;
         }
         public static long GetTotalNetworkTraffic(int type, int id = 0)
         {
