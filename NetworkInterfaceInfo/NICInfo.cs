@@ -8,8 +8,11 @@ namespace NetworkInterfaceInfo
 {
     public class NetworkInterfaces
     {
-        public string name { get; set; }
-        public int id { get; set; }
+        public int id;
+        public string name;
+        public string ipv4Address;
+        public PhysicalAddress mac;
+        //Interface statistics
         public long bytesSent;
         public long bytesReceived;
         public long bytesSentTotal;
@@ -37,18 +40,34 @@ namespace NetworkInterfaceInfo
         public static List<NetworkInterfaces> GetAllNetworkInterfaceInfo()
         {
             List<NetworkInterfaces> NICS = new List<NetworkInterfaces>();
-
+            int i = 0;
             foreach (var interfaces in NetworkInterface.GetAllNetworkInterfaces())
             {
+
                 NICS.Add(new NetworkInterfaces
                 {
                     name = interfaces.Name,
-                    id = NetworkInterfaces.getNextID(NICS)
+                    id = NetworkInterfaces.getNextID(NICS),
+                    mac = interfaces.GetPhysicalAddress(),
+                    ipv4Address = GetAdapterIPAddress(interfaces)
                 });
+                i++;
             }
             return NICS;
         }
 
+        public static string GetAdapterIPAddress(NetworkInterface ipInterface)
+        {
+            IPInterfaceProperties ipProperties = ipInterface.GetIPProperties();
+            foreach (var ip in ipProperties.UnicastAddresses)
+            {
+                if ((ipInterface.OperationalStatus == OperationalStatus.Up) && (ip.Address.AddressFamily == AddressFamily.InterNetwork))
+                {
+                    return ip.Address.ToString();
+                }
+            }
+            return "";
+        }
         /// <summary>
         /// Get the network traffic for a specific interface.
         /// </summary>
@@ -107,15 +126,7 @@ namespace NetworkInterfaceInfo
         }
         public static long ConvertBytesToKbps(long speed, double seconds)
         {
-            long ReturnSpeed;
-            if(seconds < 1)
-            {
-                ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) * seconds) * 8L);
-            }
-            else
-            {
-                ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) / seconds) * 8L);
-            }
+            long ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) / seconds) * 8L);
             return ReturnSpeed;
         }
         public static long GetTotalNetworkTraffic(int type, int id = 0)
