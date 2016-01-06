@@ -8,22 +8,52 @@ namespace NetworkInterfaceInfo
 {
     public class NetworkInterfaces
     {
+        /// <summary>
+        /// ID of the interface
+        /// </summary>
         public int id;
+        /// <summary>
+        /// Name of the interface
+        /// </summary>
         public string name;
+        /// <summary>
+        /// IPv4 Address of the interface
+        /// </summary>
         public string ipv4Address;
+        /// <summary>
+        /// Mac Address of the interface
+        /// </summary>
         public PhysicalAddress mac;
         //Interface statistics
+        /// <summary>
+        /// The total bytes sent on the interface as of the previous update
+        /// </summary>
         public long bytesSent;
+        /// <summary>
+        /// The total bytes recieved on the interface as of the previous update
+        /// </summary>
         public long bytesReceived;
+        /// <summary>
+        /// The total bytes sent when logging with the library began
+        /// </summary>
         public long bytesSentTotal;
+        /// <summary>
+        /// The total bytes recieved when logging with the library began
+        /// </summary>
         public long bytesReceivedTotal;
+        /// <summary>
+        /// Time the recieved data was updated
+        /// </summary>
         public DateTime byteSentLast;
+        /// <summary>
+        /// Time the sent data was updated        
+        /// /// </summary>
         public DateTime byteReceivedLast;
 
-        public static int getNextID(List<NetworkInterfaces> NICs)
+        public static int getNextID(List<NetworkInterfaces> nics)
         {
             int highestId = -1;
-            foreach (var id in NICs)
+            foreach (var id in nics)
             {
                 if (id.id > highestId)
                 {
@@ -37,25 +67,34 @@ namespace NetworkInterfaceInfo
     {
         public static List<NetworkInterfaces> NetworkInfo = new List<NetworkInterfaces>();
 
+        /// <summary>
+        /// Add all the network interface information into the NetworkInfo list, should only be called once unless you clear the NetworkInfo list
+        /// </summary>
+        /// <returns></returns>
         public static List<NetworkInterfaces> GetAllNetworkInterfaceInfo()
         {
-            List<NetworkInterfaces> NICS = new List<NetworkInterfaces>();
+            List<NetworkInterfaces> nics = new List<NetworkInterfaces>();
             int i = 0;
             foreach (var interfaces in NetworkInterface.GetAllNetworkInterfaces())
             {
 
-                NICS.Add(new NetworkInterfaces
+                nics.Add(new NetworkInterfaces
                 {
                     name = interfaces.Name,
-                    id = NetworkInterfaces.getNextID(NICS),
+                    id = NetworkInterfaces.getNextID(nics),
                     mac = interfaces.GetPhysicalAddress(),
                     ipv4Address = GetAdapterIPAddress(interfaces)
                 });
                 i++;
             }
-            return NICS;
+            return nics;
         }
 
+        /// <summary>
+        /// Get the ipv4 address for a specific network adapted
+        /// </summary>
+        /// <param name="ipInterface">NetworkInterface class to check for ipv4 address</param>
+        /// <returns></returns>
         public static string GetAdapterIPAddress(NetworkInterface ipInterface)
         {
             IPInterfaceProperties ipProperties = ipInterface.GetIPProperties();
@@ -124,11 +163,23 @@ namespace NetworkInterfaceInfo
                     return 0;
             }
         }
-        public static long ConvertBytesToKbps(long speed, double seconds)
+        /// <summary>
+        /// Convert bytes to kilobits per second
+        /// </summary>
+        /// <param name="bytes">how many bytes to convert to kilobits</param>
+        /// <param name="seconds">how many seconds</param>
+        /// <returns></returns>
+        public static long ConvertBytesToKbps(long bytes, double seconds)
         {
-            long ReturnSpeed = Convert.ToInt64(((double)(speed / 1024L) / seconds) * 8L);
+            long ReturnSpeed = Convert.ToInt64(((double)(bytes / 1024L) / seconds) * 8L);
             return ReturnSpeed;
         }
+        /// <summary>
+        /// Get the total network traffic for a specific adapter
+        /// </summary>
+        /// <param name="type">0 = upload, 1 = download</param>
+        /// <param name="id">id of the network interface</param>
+        /// <returns></returns>
         public static long GetTotalNetworkTraffic(int type, int id = 0)
         {
             long speed = 0;
